@@ -48,6 +48,7 @@ class AddressAdapter :
     inner class AddressViewHolder(private val binding: ItemAddressBinding) :
         RecyclerView.ViewHolder(binding.root) { //Kế thừa từ RecyclerView.ViewHolder, lớp cơ bản để giữ tham chiếu đến view của item trong RecyclerView.
         fun bind(address: AddressResponse, fullName: String) {
+//            binding.tvid.text = address.id.toString()
             binding.tvName.text = fullName
             binding.tvStreet.text = address.street
             binding.tvWard.text = "${address.city}, ${address.state}, ${address.zipcode}"

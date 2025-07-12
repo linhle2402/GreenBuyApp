@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 class HomeViewModel(
     private val productRepository: ProductRepository,
@@ -74,6 +75,17 @@ class HomeViewModel(
     private var currentPage = 1
     private var isLoadingMore = false
     private var hasMoreProducts = true
+    private var loadedPages = mutableSetOf<Int>()
+    
+    // ✅ Debug: Thêm method để reset pagination
+    fun resetPagination() {
+        currentPage = 1
+        hasMoreProducts = true
+        isLoadingMore = false
+        loadedPages.clear()
+        _products.value = emptyList()
+        println("🔄 Pagination reset: currentPage=$currentPage, hasMoreProducts=$hasMoreProducts")
+    }
 
     /**
      * ✅ MODERN: Load products với StateFlow architecture
@@ -86,6 +98,7 @@ class HomeViewModel(
             if (isRefresh) {
                 currentPage = 1
                 hasMoreProducts = true
+                loadedPages.clear()
                 _products.value = emptyList()
             }
             
@@ -95,50 +108,119 @@ class HomeViewModel(
             println("🛍️ Loading products - page: $currentPage, refresh: $isRefresh")
             println("   search: ${_searchQuery.value}")
             println("   categoryId: ${_categoryId.value}")
+            println("   current products before API call: ${_products.value.size}")
+            println("   loadedPages before API call: $loadedPages")
+            println("   hasMoreProducts before API call: $hasMoreProducts")
             
-            when (val result = productRepository.getProducts(
-                page = currentPage,
-                limit = 10,
-                search = _searchQuery.value.takeIf { it.isNotBlank() },
-                categoryId = _categoryId.value,
-                subCategoryId = _subCategoryId.value,
-                shopId = _shopId.value,
-                minPrice = _minPrice.value,
-                maxPrice = _maxPrice.value,
-                sortBy = _sortBy.value,
-                sortOrder = _sortOrder.value,
-                approvedOnly = _approvedOnly.value
-            )) {
-                is Result.Success -> {
-                    val newProducts = result.value.items
-                    
-                    _products.value = if (isRefresh) {
-                        newProducts
-                    } else {
-                        _products.value + newProducts
+            try {
+                // ✅ Thêm timeout cho API call
+                val result = withTimeoutOrNull(30000L) { // 30 giây timeout
+                    productRepository.getProducts(
+                        page = currentPage,
+                        limit = 10,
+                        search = _searchQuery.value.takeIf { it.isNotBlank() },
+                        categoryId = _categoryId.value,
+                        subCategoryId = _subCategoryId.value,
+                        shopId = _shopId.value,
+                        minPrice = _minPrice.value,
+                        maxPrice = _maxPrice.value,
+                        sortBy = _sortBy.value,
+                        sortOrder = _sortOrder.value,
+                        approvedOnly = _approvedOnly.value
+                    )
+                }
+                
+                if (result == null) {
+                    println("⏰ API call timeout after 30 seconds")
+                    _productsError.value = "Timeout: Không thể kết nối đến server"
+                    return@launch
+                }
+                
+                when (result) {
+                    is Result.Success -> {
+                        val newProducts = result.value.items
+                        val response = result.value
+                        
+                        println("📦 API returned ${newProducts.size} new products")
+                        println("📦 API response details: page=${response.page}, total=${response.total}, total_pages=${response.total_pages}")
+                        println("📦 Current products before append: ${_products.value.size}")
+                        
+                        // ✅ Luôn cộng dồn sản phẩm, kể cả khi has_next = false (trang cuối)
+                        if (newProducts.isEmpty()) {
+                            println("⚠️ API returned 0 items for page $currentPage")
+                            println("🔍 Debug: currentPage=$currentPage, totalPages=${response.total_pages}, total=${response.total}")
+
+                            // ✅ Luôn thêm trang đã gọi vào loadedPages
+                            loadedPages.add(currentPage)
+                            val oldPage = currentPage
+                            currentPage++
+
+                            // ✅ Nếu là trang đầu tiên và không có sản phẩm nào
+                            if (oldPage == 1) {
+                                println("🚫 No products available in the system")
+                                _products.value = emptyList()
+                                hasMoreProducts = false
+                            } else {
+                                // ✅ Nếu là trang tiếp theo, dừng phân trang
+                                println("🏁 Reached end of products, stopping pagination")
+                                hasMoreProducts = false
+                            }
+                            println("📄 Page updated: $oldPage -> $currentPage")
+                            println("📄 Loaded pages: $loadedPages")
+                        } else {
+                            println("🔍 Processing ${newProducts.size} new products...")
+                            println("🔍 Current products count before append: ${_products.value.size}")
+                            println("🔍 Current product IDs: ${_products.value.map { it.product_id }}")
+                            println("🔍 New product IDs: ${newProducts.map { it.product_id }}")
+                            
+                            _products.value = if (isRefresh) {
+                                println("🔄 Refresh mode: replacing all products")
+                                newProducts
+                            } else {
+                                val currentProductIds = _products.value.map { it.product_id }.toSet()
+                                val uniqueNewProducts = newProducts.filter { it.product_id !in currentProductIds }
+                                println("🔍 Unique new products: ${uniqueNewProducts.size} (filtered from ${newProducts.size})")
+                                println("🔍 Unique product IDs: ${uniqueNewProducts.map { it.product_id }}")
+                                _products.value + uniqueNewProducts
+                            }
+                            
+                            println("🔍 Final products count: ${_products.value.size}")
+                            println("🔍 Final product IDs: ${_products.value.map { it.product_id }}")
+                            
+                            // ✅ Luôn thêm trang đã gọi vào loadedPages
+                            loadedPages.add(currentPage)
+                            val oldPage = currentPage
+                            currentPage++
+                            // ✅ Sử dụng has_next để dừng phân trang, nhưng luôn cộng dồn sản phẩm trang cuối
+                            hasMoreProducts = response.has_next
+                            println("📄 Page updated: $oldPage -> $currentPage")
+                            println("📄 Loaded pages: $loadedPages")
+                        }
+                        
+                        println("✅ Products loaded: ${newProducts.size} new items, total: ${_products.value.size}")
+                        println("   hasNext: ${response.has_next}, totalPages: ${response.total_pages}, currentPage: ${currentPage-1}")
+                        println("   API response: page=${response.page}, total=${response.total}, has_next=${response.has_next}")
                     }
-                    
-                    // Check if có thêm data không
-                    hasMoreProducts = newProducts.size == 10
-                    currentPage++
-                    
-                    println("✅ Products loaded: ${newProducts.size} new items, total: ${_products.value.size}")
+                    is Result.Error -> {
+                        _productsError.value = result.error ?: "Lỗi tải sản phẩm"
+                        println("❌ Products error: ${result.error}")
+                    }
+                    is Result.NetworkError -> {
+                        _productsError.value = "Không có kết nối mạng"
+                        println("🌐 Products network error")
+                    }
+                    else -> {
+                        _productsError.value = "Lỗi không xác định"
+                        println("❓ Products unknown error")
+                    }
                 }
-                is Result.Error -> {
-                    _productsError.value = result.error ?: "Lỗi tải sản phẩm"
-                    println("❌ Products error: ${result.error}")
-                }
-                is Result.NetworkError -> {
-                    _productsError.value = "Không có kết nối mạng"
-                    println("🌐 Products network error")
-                }
-                else -> {
-                    _productsError.value = "Lỗi không xác định"
-                    println("❓ Products unknown error")
-                }
+            } catch (e: Exception) {
+                println("❌ Exception in loadProducts: ${e.message}")
+                e.printStackTrace()
+                _productsError.value = "Lỗi: ${e.message}"
+            } finally {
+                _productsLoading.value = false
             }
-            
-            _productsLoading.value = false
         }
     }
     
@@ -146,15 +228,46 @@ class HomeViewModel(
      * Load more products cho infinite scrolling
      */
     fun loadMoreProducts() {
-        if (!hasMoreProducts || isLoadingMore || _productsLoading.value) {
-            println("🚫 Cannot load more: hasMore=$hasMoreProducts, isLoading=$isLoadingMore, loading=${_productsLoading.value}")
+        println("🔄 loadMoreProducts() called")
+        println("   hasMoreProducts: $hasMoreProducts")
+        println("   isLoadingMore: $isLoadingMore") 
+        println("   productsLoading: ${_productsLoading.value}")
+        println("   currentPage: $currentPage")
+        println("   current products count: ${_products.value.size}")
+        println("   loadedPages: $loadedPages")
+        
+        // ✅ Enhanced condition check to prevent duplicate calls
+        if (!hasMoreProducts) {
+            println("🚫 Cannot load more: No more products available (hasNext=false)")
+            println("🏁 Đã load hết tất cả products có sẵn")
             return
         }
         
+        if (isLoadingMore) {
+            println("🚫 Cannot load more: Already loading more products")
+            return
+        }
+        
+        if (_productsLoading.value) {
+            println("🚫 Cannot load more: Products already loading")
+            return
+        }
+        
+        // ✅ Bỏ kiểm tra loadedPages để tránh skip trang
+        // Vì có thể có race condition
+        
+        println("✅ Starting to load more products...")
         isLoadingMore = true
         viewModelScope.launch {
-            loadProducts(isRefresh = false)
-            isLoadingMore = false
+            try {
+                loadProducts(isRefresh = false)
+            } catch (e: Exception) {
+                println("❌ Exception in loadMoreProducts: ${e.message}")
+                e.printStackTrace()
+            } finally {
+                isLoadingMore = false
+                println("✅ loadMoreProducts completed")
+            }
         }
     }
     
@@ -212,8 +325,8 @@ class HomeViewModel(
         // Tạo dữ liệu banner mẫu với 3 ảnh
         val bannerData = listOf(
             R.drawable.banner_1,
-            R.drawable.banner_1,
-            R.drawable.banner_1
+            R.drawable.ic_banner_2,
+            R.drawable.ic_banner_3
         )
         
         _bannerItems.value = bannerData
@@ -317,5 +430,72 @@ class HomeViewModel(
     
     fun retryLoadCategories() {
         loadCategories()
+    }
+
+    /**
+     * ✅ Debug function để test API với các tham số khác nhau
+     */
+    fun testApiWithParams(
+        page: Int = 1,
+        limit: Int = 15,
+        search: String = "",
+        categoryId: Int? = null,
+        approvedOnly: Boolean = true
+    ) {
+        viewModelScope.launch {
+            println("🧪 Testing API with params:")
+            println("   page: $page")
+            println("   limit: $limit")
+            println("   search: '$search'")
+            println("   categoryId: $categoryId")
+            println("   approvedOnly: $approvedOnly")
+            
+            try {
+                val result = withTimeoutOrNull(10000L) { // 10 giây timeout cho test
+                    productRepository.getProducts(
+                        page = page,
+                        limit = limit,
+                        search = search.takeIf { it.isNotBlank() },
+                        categoryId = categoryId,
+                        approvedOnly = approvedOnly
+                    )
+                }
+                
+                if (result == null) {
+                    println("⏰ Test API timeout")
+                    return@launch
+                }
+                
+                when (result) {
+                    is Result.Success -> {
+                        val response = result.value
+                        println("✅ Test API success:")
+                        println("   items: ${response.items.size}")
+                        println("   total: ${response.total}")
+                        println("   page: ${response.page}")
+                        println("   total_pages: ${response.total_pages}")
+                        println("   has_next: ${response.has_next}")
+                        println("   has_prev: ${response.has_prev}")
+                        
+                        // Log first few items
+                        response.items.take(3).forEach { product ->
+                            println("   Product: ${product.name} (ID: ${product.product_id})")
+                        }
+                    }
+                    is Result.Error -> {
+                        println("❌ Test API error: ${result.error}")
+                    }
+                    is Result.NetworkError -> {
+                        println("🌐 Test API network error")
+                    }
+                    else -> {
+                        println("❓ Test API unknown error")
+                    }
+                }
+            } catch (e: Exception) {
+                println("❌ Test API exception: ${e.message}")
+                e.printStackTrace()
+            }
+        }
     }
 }

@@ -2,6 +2,7 @@ package com.example.greenbuyapp.data.product
 
 import com.example.greenbuyapp.data.MessageResponse
 import com.example.greenbuyapp.data.product.model.Product
+import com.example.greenbuyapp.data.product.model.ProductAttribute
 import com.example.greenbuyapp.data.product.model.ProductAttributeList
 import com.example.greenbuyapp.data.product.model.ProductListResponse
 import com.example.greenbuyapp.data.product.model.TrendingProduct
@@ -11,6 +12,9 @@ import com.example.greenbuyapp.data.product.model.InventoryStatsResponse
 import com.example.greenbuyapp.data.product.model.ProductsByStatusResponse
 import com.example.greenbuyapp.data.product.model.CreateProductResponse
 import com.example.greenbuyapp.data.product.model.CreateAttributeResponse
+import com.example.greenbuyapp.data.product.model.ApproveProductRequest
+import com.example.greenbuyapp.data.product.model.PendingApprovalProduct
+import com.example.greenbuyapp.data.product.model.FeaturedProductsResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import com.example.greenbuyapp.domain.product.ProductRepository
@@ -22,6 +26,8 @@ import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.http.Body
+import retrofit2.http.PATCH
 
 interface ProductService {
     
@@ -53,6 +59,14 @@ interface ProductService {
     suspend fun getProductAttributes(
         @Path("product_id") productId: Int
     ): ProductAttributeList
+
+    /**
+     * ✅ Lấy attribute theo ID
+     */
+    @GET("api/attribute/{attribute_id}")
+    suspend fun getAttribute(
+        @Path("attribute_id") attributeId: Int
+    ): ProductAttribute
 
     /**
      * Lấy product theo ID
@@ -183,5 +197,37 @@ interface ProductService {
     suspend fun deleteAttribute(
         @Path("attribute_id") attributeId: Int
     ): MessageResponse
+
+    /**
+     * ✅ Duyệt sản phẩm (approve)
+     */
+    @PATCH("api/product/{product_id}/approve")
+    suspend fun approveProduct(
+        @Path("product_id") productId: Int,
+        @Body requestBody: ApproveProductRequest
+    ): Product
+
+    /**
+     * ✅ Từ chối sản phẩm (reject)
+     */
+    @PATCH("api/product/{product_id}/approve")
+    suspend fun rejectProduct(
+        @Path("product_id") productId: Int,
+        @Body requestBody: ApproveProductRequest
+    ): Product
+
+    /**
+     * ✅ Lấy danh sách sản phẩm chờ duyệt (pending approval)
+     */
+    @GET("api/product/pending-approval")
+    suspend fun getPendingApprovalProducts(): List<PendingApprovalProduct>
+
+    /**
+     * ✅ Lấy danh sách sản phẩm nổi bật (featured products)
+     */
+    @GET("api/product/featured")
+    suspend fun getFeaturedProducts(
+        @Query("limit") limit: Int = 50
+    ): FeaturedProductsResponse
 
 }

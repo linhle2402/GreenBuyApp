@@ -16,6 +16,7 @@ import com.example.greenbuyapp.R
 import com.example.greenbuyapp.data.product.model.ProductAttribute
 import com.example.greenbuyapp.databinding.FragmentEditProductVariantBinding
 import com.example.greenbuyapp.ui.shop.addProduct.AddProductViewModel
+import com.example.greenbuyapp.ui.shop.addProduct.DeleteAttributeUiState
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -73,6 +74,10 @@ class EditProductVariantFragment : Fragment() {
             return
         }
         
+        // ✅ Set productId in ViewModel trước khi thực hiện bất kỳ operation nào
+        viewModel.setProductId(productId)
+        println("🏷️ EditProductVariantFragment: Set productId = $productId in ViewModel")
+        
         setupRecyclerView()
         setupFab()
         observeViewModel()
@@ -84,15 +89,7 @@ class EditProductVariantFragment : Fragment() {
     private fun setupRecyclerView() {
         attributeAdapter = EditAttributeAdapter(
             onPickImage = { position -> openImagePicker(position) },
-            onDeleteAttribute = { attribute,position -> deleteAttribute(attribute, position)
-                                    if (attributeAdapter.itemCount - 1 == 0) {
-                                        Log.d("EditProductVariantFragment", "No attributes left, showing empty state")
-                                        binding.tvEmptyState.visibility = View.VISIBLE
-                                    } else {
-                                        Log.d("EditProductVariantFragment", "${attributeAdapter.itemCount} attributes left}")
-                                        binding.tvEmptyState.visibility = View.GONE
-                                    }
-                                },
+            onDeleteAttribute = { attribute, position -> deleteAttribute(attribute, position) },
             onSaveAttribute = { attribute, position -> saveAttribute(attribute, position) }
         )
         
@@ -119,9 +116,36 @@ class EditProductVariantFragment : Fragment() {
     }
 
     private fun deleteAttribute(attribute: ProductAttribute, position: Int) {
+        println("🗑️ Deleting attribute:")
+        println("   - attribute_id: ${attribute.attribute_id}")
+        println("   - position: $position")
+        println("   - current productId in fragment: $productId")
+
+        // ✅ Phân biệt 2 trường hợp: attribute đã save hoặc chưa save
+        if (attribute.attribute_id > 0) {
+            // Attribute đã có trên server - gọi API delete
+            println("🗑️ Deleting saved attribute from server")
+            viewModel.deleteProductAttribute(attribute.attribute_id)
+        } else {
+            // Attribute chưa save - chỉ xóa khỏi adapter
+            println("🗑️ Removing unsaved attribute from adapter")
         attributeAdapter.removeAttribute(position)
-        viewModel.deleteProductAttribute(attribute.attribute_id)
+            
+            // Hiển thị thông báo cho unsaved attribute
+            Toast.makeText(context, "Đã hủy thuộc tính chưa lưu", Toast.LENGTH_SHORT).show()
+            
+            // Cập nhật empty state
+            if (attributeAdapter.itemCount == 0) {
+                Log.d("EditProductVariantFragment", "No attributes left, showing empty state")
+                binding.tvEmptyState.visibility = View.VISIBLE
+            } else {
+                Log.d("EditProductVariantFragment", "${attributeAdapter.itemCount} attributes left")
+                binding.tvEmptyState.visibility = View.GONE
+            }
+        }
     }
+    
+
 
     private fun openImagePicker(position: Int) {
         currentImagePickerPosition = position
@@ -185,6 +209,32 @@ class EditProductVariantFragment : Fragment() {
                 if (!errorMessage.isNullOrEmpty()) {
                     Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
                     viewModel.clearErrorMessage()
+                }
+            }
+        }
+        
+        // ✅ Observe delete attribute state (chỉ cho saved attributes)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.deleteAttributeState.collect { state ->
+                when (state) {
+                    is DeleteAttributeUiState.Loading -> {
+                        // Có thể hiển thị loading indicator nếu cần
+                        println("🔄 Deleting saved attribute from server...")
+                    }
+                    is DeleteAttributeUiState.Success -> {
+                        Toast.makeText(context, "Đã xóa thuộc tính thành công", Toast.LENGTH_SHORT).show()
+                        println("✅ Saved attribute deleted successfully: ${state.attributeId}")
+                        // ✅ Server sẽ tự động cập nhật danh sách thông qua loadProductAttributes
+                        viewModel.resetDeleteAttributeState()
+                    }
+                    is DeleteAttributeUiState.Error -> {
+                        Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
+                        println("❌ Error deleting saved attribute: ${state.message}")
+                        viewModel.resetDeleteAttributeState()
+                    }
+                    is DeleteAttributeUiState.Idle -> {
+                        // Reset state
+                    }
                 }
             }
         }

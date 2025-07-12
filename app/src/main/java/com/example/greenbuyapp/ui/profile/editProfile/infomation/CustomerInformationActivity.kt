@@ -8,6 +8,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
@@ -81,6 +82,7 @@ class CustomerInformationActivity : BaseActivity<ActivityCustomerInformationBind
     override fun onCreate(savedInstanceState: Bundle?) {
         setContentView(binding.root)
         super.onCreate(savedInstanceState)
+        window.statusBarColor = ContextCompat.getColor(this, R.color.main_color)
     }
 
     override fun initViews() {
@@ -115,7 +117,7 @@ class CustomerInformationActivity : BaseActivity<ActivityCustomerInformationBind
                     is UpdateInfomationUiState.Success -> {
                         binding.btnSaveInfor.isEnabled = true
                         binding.btnSaveInfor.text = "Lưu thành công"
-                        Toast.makeText(this@CustomerInformationActivity, "✅ Tạo sản phẩm thành công!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@CustomerInformationActivity, "✅ Cập nhật thông tin thành công!", Toast.LENGTH_SHORT).show()
                         backToProfile()
                     }
                     is UpdateInfomationUiState.Error -> {
@@ -186,10 +188,15 @@ class CustomerInformationActivity : BaseActivity<ActivityCustomerInformationBind
             binding.edtPhone.error = "Số điện thoại không được để trống"
             return
         }
+        if (phone.matches(Regex("^\\d{10}$"))){
+            binding.edtPhone.error = "Số điện thoại không hợp lệ"
+            return
+        }
         if (selectedBirthDate.isNullOrEmpty()) {
             Toast.makeText(this, "Vui lòng chọn ngày sinh", Toast.LENGTH_SHORT).show()
             return
         }
+
 
         // In log kiểm tra dữ liệu thật được gửi đi
         println("📤 Đang gửi PUT với dữ liệu:")
@@ -204,7 +211,7 @@ class CustomerInformationActivity : BaseActivity<ActivityCustomerInformationBind
             avatarUrl, // Có thể null nếu không chọn ảnh mới
             ho,
             ten,
-            phone.toInt(),
+            phone,
             selectedBirthDate!!
         )
 

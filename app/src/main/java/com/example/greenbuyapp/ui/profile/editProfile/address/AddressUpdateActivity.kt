@@ -63,6 +63,7 @@ class AddressUpdateActivity : BaseActivity<ActivityAddressUpdateBinding>() {
                 //Gán dữ liệu vào các EditText và Switch tương ứng.
                 viewModel.address.collectLatest { address ->
                     address?.let {
+
                         binding.edtPhone.setText(it.phoneNumber)
                         binding.edtStreet.setText(it.street)
                         binding.edtCity.setText(it.city)
@@ -88,7 +89,7 @@ class AddressUpdateActivity : BaseActivity<ActivityAddressUpdateBinding>() {
 
             // Quan sát khi có lỗi
             launch {
-                viewModel.errorMessage.collectLatest { msg ->
+                viewModel.errorMessage.collect { msg ->
                     msg?.let {
                         showToast("❌ $it")
                         viewModel.clearError()

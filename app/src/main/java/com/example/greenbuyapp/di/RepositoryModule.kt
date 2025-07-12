@@ -1,6 +1,7 @@
 package com.example.greenbuyapp.di
 
 
+import com.example.greenbuyapp.domain.approve.ApproveRepository
 import com.example.greenbuyapp.domain.cart.CartRepository
 import com.example.greenbuyapp.domain.category.CategoryRepository
 import com.example.greenbuyapp.domain.login.LoginRepository
@@ -20,13 +21,15 @@ val repositoryModule = module {
     single(createdAtStart = true) { UserRepository(get(), get()) }
     single(createdAtStart = true) { LoginRepository(get(), get(), get()) }
     single(createdAtStart = true) { RegisterRepository(get()) }
-    single(createdAtStart = true) { ProductRepository(get()) }
+    single(createdAtStart = true) { ProductRepository(get(), get()) }
     single(createdAtStart = true) { CategoryRepository(get()) }
     single(createdAtStart = true) { FollowStatsRepository(get()) }
     single(createdAtStart = true) { ShopRepository(get(), get()) }
     single(createdAtStart = true) { CartRepository(get()) }
     single(createdAtStart = true) { NoticeRepository(get()) }
     single(createdAtStart = true) { FollowRepository(get()) }
+    single(createdAtStart = true) { ApproveRepository(get()) }
+
 //    single(createdAtStart = true) { BillingRepository(androidApplication()) }
 //
 //    single { AutoWallpaperRepository(get(), get()) }

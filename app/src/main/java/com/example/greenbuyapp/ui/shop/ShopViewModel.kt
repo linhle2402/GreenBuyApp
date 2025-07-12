@@ -2,11 +2,13 @@ package com.example.greenbuyapp.ui.shop
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.greenbuyapp.R
 import com.example.greenbuyapp.data.shop.model.OrderStats
 import com.example.greenbuyapp.data.shop.model.Shop
+import com.example.greenbuyapp.domain.approve.ApproveRepository
 import com.example.greenbuyapp.domain.shop.ShopRepository
 import com.example.greenbuyapp.util.Result
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +17,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class ShopViewModel(
-    private val shopRepository: ShopRepository
+    private val shopRepository: ShopRepository,
+    private val approveRepository: ApproveRepository
 ) : ViewModel() {
 
     // ✅ Cleaned up - removed unused register-related StateFlows
@@ -99,8 +102,8 @@ class ShopViewModel(
         // Tạo dữ liệu banner mẫu với 3 ảnh
         val bannerData = listOf(
             R.drawable.banner_1,
-            R.drawable.banner_1,
-            R.drawable.banner_1
+            R.drawable.ic_banner_2,
+            R.drawable.ic_banner_3
         )
 
         _bannerItems.value = bannerData
