@@ -1,52 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/backgroundLight">
+    android:background="@color/backgroundLight"
+    android:orientation="vertical">
 
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardCornerRadius="@dimen/_12sdp"
-        android:layout_marginTop="@dimen/_12sdp"
         android:layout_marginHorizontal="@dimen/_12sdp"
+        android:layout_marginTop="@dimen/_12sdp"
+        app:cardCornerRadius="@dimen/_12sdp"
         app:cardElevation="0dp">
+
+<!--        Tạo hiệu ứng bo góc và nổi bật từng khung địa chỉ.-->
+<!--        marginHorizontal để tạo khoảng cách 2 bên.-->
+<!--        cardElevation=0dp: không có đổ bóng.-->
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/white"
-            android:padding="16dp"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="16dp">
             <!-- Tên và nhãn "Mặc định" -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
+                android:layout_marginBottom="4dp"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="4dp">
+                android:orientation="horizontal">
 
                 <TextView
                     android:id="@+id/tvName"
                     android:layout_width="0dp"
-                    android:layout_weight="1"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:text="Tên người nhận"
-                    android:textStyle="bold"
                     android:textColor="#000000"
-                    android:textSize="20sp" />
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvDefault"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Mặc định"
-                    android:textColor="#D32F2F"
+                    android:background="@drawable/defaul_addres"
                     android:paddingHorizontal="8dp"
                     android:paddingVertical="2dp"
+                    android:text="Mặc định"
+                    android:textColor="#D32F2F"
                     android:textSize="14sp"
-                    android:background="@drawable/defaul_addres"
                     android:visibility="gone" />
             </LinearLayout>
 
@@ -55,20 +60,20 @@
                 android:id="@+id/tvPhone"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="2dp"
                 android:text="+84 961 612 382"
                 android:textColor="#000000"
-                android:textSize="17sp"
-                android:layout_marginBottom="2dp" />
+                android:textSize="17sp" />
 
             <!-- Địa chỉ (đường) -->
             <TextView
                 android:id="@+id/tvStreet"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="2dp"
                 android:text="Số nhà 108, Ngõ 79 Phùng Khoang"
                 android:textColor="#000000"
-                android:textSize="17sp"
-                android:layout_marginBottom="2dp" />
+                android:textSize="17sp" />
 
             <!-- Thành phố, tỉnh, zip, quốc gia -->
             <TextView
@@ -81,3 +86,7 @@
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 </LinearLayout>
+
+<!--    LinearLayout là một loại ViewGroup trong Android dùng để sắp xếp các View con theo chiều ngang (horizontal) hoặc chiều dọc (vertical).-->
+
+

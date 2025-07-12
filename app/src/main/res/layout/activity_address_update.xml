@@ -147,7 +147,8 @@
             </androidx.cardview.widget.CardView>
         </LinearLayout>
     </ScrollView>
-
+<!--    Dòng XML này tạo ra một nút gạt (switch) cho phép người dùng lựa chọn có đặt địa chỉ này làm địa chỉ mặc định hay không.-->
+<!--    dùng từ thư viện androidx.appcompat-->
     <!-- Chỉ còn nút Cập nhật -->
     <Button
         android:id="@+id/btn_save_address"

@@ -10,12 +10,20 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
+//triển khai màn hình AddressUpdateActivity để cập nhật địa chỉ người dùng.
+//Hoạt động này bao gồm việc lấy địa chỉ theo id, hiển thị lên giao diện, cho phép người dùng sửa, và gửi lại dữ liệu mới về server qua ViewModel.
+
+//Lấy addressId từ Intent  ->	Dùng để gọi API lấy địa chỉ tương ứng
+//Hiển thị thông tin lên các EditText	-> Để người dùng sửa địa chỉ
+//Cập nhật dữ liệu qua ViewModel	-> Sau khi nhấn nút Lưu
+//Quan sát các StateFlow để biết thành công / lỗi	-> Cập nhật UI tương ứng
+
 class AddressUpdateActivity : BaseActivity<ActivityAddressUpdateBinding>() {
 
     override val binding: ActivityAddressUpdateBinding by lazy {
         ActivityAddressUpdateBinding.inflate(layoutInflater)
     }
-
+   // Dùng ViewBinding để truy cập các View từ XML.
     override val viewModel: AddressUpdateViewModel by viewModel()
 
     private var addressId: Int = -1
@@ -24,11 +32,15 @@ class AddressUpdateActivity : BaseActivity<ActivityAddressUpdateBinding>() {
         setContentView(binding.root)
         super.onCreate(savedInstanceState)
 
+
+//        Lấy address_id từ Intent (được gửi từ màn RecyclerView).
+//        Nếu tồn tại thì gọi ViewModel để lấy dữ liệu địa chỉ từ API
+
         addressId = intent.getIntExtra("address_id", -1)
         if (addressId != -1) {
             viewModel.getAddressById(addressId)
         }
-
+// xử lí người dùng khi nhấn nút lưu
         binding.btnSaveAddress.setOnClickListener {
             updateAddress()
         }
@@ -44,7 +56,11 @@ class AddressUpdateActivity : BaseActivity<ActivityAddressUpdateBinding>() {
     private fun setViewModel() {
         lifecycleScope.launch {
             // Quan sát dữ liệu địa chỉ
+            // hiện thị địa chỉ lên giao diện
             launch {
+                //address là StateFlow từ ViewModel (chứa dữ liệu từ API).
+                //
+                //Gán dữ liệu vào các EditText và Switch tương ứng.
                 viewModel.address.collectLatest { address ->
                     address?.let {
                         binding.edtPhone.setText(it.phoneNumber)
@@ -60,6 +76,8 @@ class AddressUpdateActivity : BaseActivity<ActivityAddressUpdateBinding>() {
 
             // Quan sát khi cập nhật thành công
             launch {
+                // quan sát trạng thái ViewModel
+                //Khi cập nhật thành công → hiện thông báo → đóng màn hình.
                 viewModel.updateSuccess.collectLatest { success ->
                     if (success) {
                         showToast("✅ Cập nhật địa chỉ thành công")
@@ -74,6 +92,7 @@ class AddressUpdateActivity : BaseActivity<ActivityAddressUpdateBinding>() {
                     msg?.let {
                         showToast("❌ $it")
                         viewModel.clearError()
+                        //Khi có lỗi → hiện lỗi và reset trạng thái lỗi trong ViewModel.
                     }
                 }
             }
@@ -135,3 +154,24 @@ class AddressUpdateActivity : BaseActivity<ActivityAddressUpdateBinding>() {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
     }
 }
+//Intent.putExtra("address_id", 123)
+//↓
+//AddressUpdateActivity nhận id
+//↓
+//ViewModel.getAddressById(id)
+//↓
+//API trả về Address → hiển thị lên UI
+//↓
+//Người dùng sửa → nhấn Lưu
+//↓
+//Gọi ViewModel.updateAddress(id, data)
+//↓
+//Nếu thành công → Toast + finish()
+//Nếu lỗi → Toast lỗi
+
+//AddressUpdateActivity ->	Giao diện nhập/sửa địa chỉ
+//ViewBinding	-> Truy cập các view XML
+//ViewModel (AddressUpdateViewModel)	-> Xử lý lấy và cập nhật dữ liệu
+//StateFlow	-> Truyền dữ liệu trạng thái về UI
+//AddressUpdateRequest	-> Đối tượng chứa dữ liệu gửi về API
+//lifecycleScope.launch -> 	Quan sát dữ liệu an toàn theo vòng đời

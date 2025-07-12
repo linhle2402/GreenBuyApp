@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     android:background="#F4F4F4">
 
+
     <!-- App Bar Layout -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appbar"
@@ -28,6 +29,10 @@
             app:titleTextColor="@android:color/black" />
     </com.google.android.material.appbar.AppBarLayout>
 
+
+<!--    Cho phép cuộn nội dung nếu màn hình không đủ chỗ.-->
+    <!--    fillViewport="true" giúp nội dung kéo giãn chiều cao bằng ScrollView khi nội dung ngắn.-->
+    <!--    Được đặt giữa AppBarLayout (phía trên) và nút "Lưu địa chỉ" (phía dưới).-->
     <!-- ScrollView chứa nội dung form -->
     <ScrollView
         android:id="@+id/scroll_view"

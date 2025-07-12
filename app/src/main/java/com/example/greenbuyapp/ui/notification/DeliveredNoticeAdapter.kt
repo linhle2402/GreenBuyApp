@@ -43,7 +43,6 @@ class DeliveredNoticeAdapter : RecyclerView.Adapter<DeliveredNoticeAdapter.Notic
                 )
             }
             itemView.findViewById<TextView>(R.id.tvDeliveryStatus).text = spannable
-
             itemView.setOnClickListener {
                 onItemClick?.invoke(notice)
             }

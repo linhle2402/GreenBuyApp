@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/backgroundLight">
-
+<!--    ConstraintLayout: Layout  cho phép sắp xếp vị trí linh hoạt bằng ràng buộc (constraint) giữa các view.-->
     <!-- App Bar Layout -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appbar"
@@ -16,7 +16,9 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
-
+<!--        AppBarLayout:chứa Toolbar, hỗ trợ hiệu ứng cuộn (scroll behavior).-->
+<!--        Được gắn vào đỉnh (top) của ConstraintLayout.-->
+<!--        MaterialToolbar: thanh tiêu đề trên cùng, hiển thị chữ "Địa chỉ" và có icon quay lại (ic_back).-->
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
@@ -28,6 +30,11 @@
             app:titleTextColor="@android:color/black" />
     </com.google.android.material.appbar.AppBarLayout>
 
+<!--    RecyclerView: danh sách cuộn để hiển thị các địa chỉ.-->
+<!--    Constraint (ràng buộc) giúp nó:-->
+<!--    nằm ngay dưới AppBarLayout-->
+<!--    nằm trên nút btn_add_addresss-->
+<!--    trải rộng hết chiều ngang (start_toStart, end_toEnd)-->
 
     <!-- RecyclerView hiển thị danh sách địa chỉ -->
     <androidx.recyclerview.widget.RecyclerView
@@ -54,4 +61,5 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+<!--    Được gắn constraintBottom_toBottomOf="parent" → nằm dưới cùng màn hình.-->
 </androidx.constraintlayout.widget.ConstraintLayout>

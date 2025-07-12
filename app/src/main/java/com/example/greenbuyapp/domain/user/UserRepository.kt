@@ -27,21 +27,25 @@ import com.example.greenbuyapp.util.MultipartUtils
 import com.google.android.datatransport.runtime.dagger.Provides
 import java.io.IOException
 
-
+//quản lý dữ liệu liên quan đến người dùng (user) và địa chỉ (address) bằng cách tương tác với các dịch vụ API (UserService)
+//và xử lý các cuộc gọi API bất đồng bộ bằng Kotlin Coroutines.
 class UserRepository(
+    // khai báo biến
     private val userService: UserService,
     private val searchService: SearchService,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
 
-
+//Gọi API getUserMe() từ UserService để lấy thông tin người dùng.
+    // Sử dụng safeApiCall (chưa được định nghĩa trong đoạn mã, nhưng thường là một hàm tiện ích để xử lý lỗi API) với dispatcher để thực thi trên thread-luồng I/O.
     suspend fun getUserMe() =
         safeApiCall(dispatcher) { userService.getUserMe() }
 
 //    suspend fun getMe() =
 //        safeApiCall(dispatcher) { userService.getMe() }
 
-    suspend fun createAddress(
+//    Tạo một địa chỉ mới bằng cách gửi yêu cầu đến API addAddress.
+    suspend fun createAddress( // tham số
         street: String,
         city: String,
         state: String,
@@ -50,7 +54,7 @@ class UserRepository(
         phone: String
     ): Result<AddressResponse> {
         return try {
-            val request = AddressAddRequest(
+            val request = AddressAddRequest( // tạo đối tượng AddressAddRequest từ các tham số
                 street = street,
                 city = city,
                 state = state,
@@ -58,16 +62,21 @@ class UserRepository(
                 country = country,
                 phone = phone
             )
-            val response = userService.addAddress(request)
-            Result.Success(response)
+            val response = userService.addAddress(request) //để gửi yêu cầu post
+            // class định nghĩa kiểu dl trả về
+            Result.Success(response) // nếu thành công với AddressResponse
         } catch (e: Exception) {
             Result.Error(null,e.message ?: "Unknown")
         }
     }
-
-    suspend fun getAddressById(id: Int): Result<AddressDetailResponse> {
+    suspend fun getListAddress(): Result<List<AddressResponse>> {
         return safeApiCall(dispatcher) {
-
+            userService.getAddresses()
+        }
+    }
+    suspend fun getAddressById(id: Int): Result<AddressDetailResponse> {
+        //Sử dụng safeApiCall để gọi userService.getAddressDetail(id) và xử lý kết quả trên thread I/O.
+        return safeApiCall(dispatcher) {
             userService.getAddressDetail(id)
         }
     }
@@ -77,13 +86,15 @@ class UserRepository(
         request: AddressUpdateRequest
     ): Result<AddressDetailResponse> {
         return try {
-            val response = userService.updateAddress(id, request)
+            val response = userService.updateAddress(id, request) // để gửi yêu cầu PUT
             Result.Success(response)
         } catch (e: Exception) {
             Result.Error(null, e.message ?: "Unknown")
         }
     }
 
+//    UserRepository là một phần của Data layer, cung cấp dữ liệu cho ViewModel.
+//    ViewModel sẽ gọi các phương thức này và sử dụng StateFlow để thông báo cho View.
 
     fun searchUsers(
         query: String,
@@ -113,11 +124,7 @@ class UserRepository(
             userService.getCustomerOrderDetail(orderId)
         }
     }
-    suspend fun getListAddress(): Result<List<AddressResponse>> {
-        return safeApiCall(dispatcher) {
-            userService.getAddresses()
-        }
-    }
+
 
     suspend fun getUserMeDirect(): UserMeResponse {
         return userService.getUserMe()

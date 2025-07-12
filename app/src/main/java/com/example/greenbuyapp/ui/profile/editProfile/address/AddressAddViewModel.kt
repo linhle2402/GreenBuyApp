@@ -14,6 +14,11 @@ class AddressAddViewModel(
     private val userRepository: UserRepository
 ) : ViewModel() {
 
+//    Quản lý trạng thái khi thêm địa chỉ người dùng mới.
+//    Xử lý logic gọi API thông qua UserRepository.
+//    Truyền dữ liệu theo luồng StateFlow về UI để:
+
+    // khởi tạo các trạng thái
     // Trạng thái địa chỉ sau khi thêm
     private val _newAddress = MutableStateFlow<AddressResponse?>(null)
     val newAddress: StateFlow<AddressResponse?> = _newAddress.asStateFlow()
@@ -30,6 +35,7 @@ class AddressAddViewModel(
     private val _isSuccess = MutableStateFlow(false)
     val isSuccess: StateFlow<Boolean> = _isSuccess.asStateFlow()
 
+    // StateFlow: dữ liệu tự động quan sát và cập nhật UI khi giá trị thay đổi.
     /**
      * Gọi API để thêm địa chỉ mới
      */
@@ -41,12 +47,14 @@ class AddressAddViewModel(
         country: String,
         phone: String
     ) {
+        // dặt lại trạng thái ban đầu
         viewModelScope.launch {
             _isLoading.value = true
             _errorMessage.value = null
             _isSuccess.value = false
 
             try {
+                // gọi API qua userRepositry
                 when (val result = userRepository.createAddress(
                     street = street,
                     city = city,
@@ -86,14 +94,15 @@ class AddressAddViewModel(
             }
         }
     }
-
+   // UI có thể collect các luồng StateFlow này và tự động cập nhật.
+    //Xác định kết quả trả về từ API
     /**
      * Xóa lỗi
      */
     fun clearErrorMessage() {
         _errorMessage.value = null
     }
-
+//Dùng để xóa lỗi khi người dùng bấm "Đóng" popup hoặc tương tác lại.
     /**
      * Reset trạng thái thêm thành công (sau khi thông báo xong)
      */

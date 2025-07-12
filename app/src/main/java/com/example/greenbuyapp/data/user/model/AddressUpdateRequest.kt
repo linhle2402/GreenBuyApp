@@ -3,6 +3,7 @@ package com.example.greenbuyapp.data.user.model
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
+//dùng để gửi yêu cầu cập nhật địa chỉ từ phía client (ứng dụng Android) lên server
 @JsonClass(generateAdapter = true)
 data class AddressUpdateRequest(
     @Json(name = "street") val street: String,

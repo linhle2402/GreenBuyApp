@@ -14,10 +14,13 @@ import kotlinx.coroutines.launch
 class AddressViewModel(
     private val userRepository: UserRepository
 ) : ViewModel() {
+    //Lấy danh sách địa chỉ
+    //Lấy tên người dùng
+    //Gửi trạng thái tải, lỗi, xác thực, địa chỉ mặc định về cho UI
     // Authentication state
     private val _authState = MutableStateFlow<AuthState>(AuthState.Unknown)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
-
+    // danh sách địa chỉ trả về từ API
     private val _addresses = MutableStateFlow<List<AddressResponse>>(emptyList())
     val addresses: StateFlow<List<AddressResponse>> = _addresses.asStateFlow()
     //lấy tên người dùng
@@ -33,7 +36,7 @@ class AddressViewModel(
     //gán địa chỉ mặc định
     private val _defaultAddress = MutableStateFlow<AddressResponse?>(null)
     val defaultAddress: StateFlow<AddressResponse?> = _defaultAddress.asStateFlow()
-
+    //Gọi API qua userRepository.getListAddress()
     fun loadAddresses() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -73,7 +76,7 @@ class AddressViewModel(
             }
         }
     }
-
+    // Gọi API userRepository.getUserMe() để lấy thông tin người dùng hiện tại
     fun loadUserInfor() {
         viewModelScope.launch {
             try {

@@ -2,7 +2,7 @@ package com.example.greenbuyapp.data.user.model
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
-
+// được dùng để nhận dữ liệu danh sách địa chỉ từ server (thường khi gọi API kiểu GET /addresses)
 @JsonClass(generateAdapter = true)
 data class AddressResponse (
     val id: Int,
